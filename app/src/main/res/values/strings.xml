@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BTA2DP</string>
+    <string name="textForLog">Bluetooth A2DP</string>
+</resources>
