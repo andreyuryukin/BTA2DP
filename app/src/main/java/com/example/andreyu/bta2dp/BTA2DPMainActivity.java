@@ -1,11 +1,13 @@
 package com.example.andreyu.bta2dp;
 
+import android.bluetooth.BluetoothProfile;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.widget.TextView;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -14,6 +16,7 @@ import java.util.Set;
 public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBroadcastReceiver.Callback, BluetoothA2DPRequester.Callback {
 
     public TextView textLog;
+    BluetoothA2dp btProxy;
     public boolean connectBT;
 
     /**
@@ -60,6 +63,12 @@ public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBr
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BluetoothAdapter.getDefaultAdapter().closeProfileProxy(BluetoothProfile.A2DP, btProxy);
+    }
+
+    @Override
     public void onBluetoothError() {
         textLog.append("\nThere was an error enabling the Bluetooth Adapter.");
     }
@@ -72,11 +81,12 @@ public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBr
     @Override
     public void onA2DPProxyReceived(BluetoothA2dp proxy) {
 
+        btProxy = proxy;
         Method connect = getConnectMethod();
 
         textLog.append("\nBTA2DPMainActivity->findBondedDeviceByName");
         BluetoothDevice device = findBondedDeviceByName(mAdapter, CAR_MEDIA);
-        if(device != null){
+        if (device != null) {
             textLog.append("\nDevice found:" + device.getName());
         }
 
