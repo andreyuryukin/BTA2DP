@@ -23,7 +23,8 @@ public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBr
      * This is the name of the device to connect to. You can replace this with the name of
      * your device.
      */
-    private static final String CAR_MEDIA = "ST DISCO R58";
+//    private static final String CAR_MEDIA = "ST DISCO R58";
+    private static final String CAR_MEDIA = "My_Radio";
 
     /**
      * Local reference to the device's BluetoothAdapter
