@@ -1,15 +1,22 @@
 package com.example.andreyu.bta2dp;
 
 import android.bluetooth.BluetoothProfile;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,13 +25,19 @@ public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBr
     public TextView textLog;
     BluetoothA2dp btProxy;
     public boolean connectBT;
+    public ListView listViewDevices;
+    public ArrayAdapter<String> arrayAdapter;
+    ArrayList<String> devicesList;
+    SharedPreferences sharedPreferences;
 
     /**
      * This is the name of the device to connect to. You can replace this with the name of
      * your device.
      */
-//    private static final String CAR_MEDIA = "ST DISCO R58";
-    private static final String CAR_MEDIA = "My_Radio";
+    public String CAR_MEDIA = "My_Radio";
+    public String deviceName = "deviceName";
+    public String deviceNameValue;
+    public String myPreferenceFile = "bta2dp_prefs";
 
     /**
      * Local reference to the device's BluetoothAdapter
@@ -39,9 +52,15 @@ public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBr
         connectBT = true;
 
         textLog = (TextView) findViewById(R.id.textViewLog);
+        listViewDevices = (ListView) findViewById(R.id.listViewDevices);
 
         assert textLog != null;
+        textLog.append("\n--------------------------------------------------");
         textLog.append("\nBTA2DPMainActivity->onCreate");
+
+        sharedPreferences = getSharedPreferences(myPreferenceFile, Context.MODE_PRIVATE);
+        deviceNameValue = sharedPreferences.getString(deviceName, "No device");
+        textLog.append("\nSaved device: " + deviceNameValue);
 
         //Store a local reference to the BluetoothAdapter
         mAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -49,7 +68,28 @@ public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBr
         //Already connected, skip the rest
         if (mAdapter.isEnabled()) {
             textLog.append("\nBTA2DPMainActivity->isEnabled");
-            onBluetoothConnected();
+
+            devicesList = new ArrayList<>();
+            for (BluetoothDevice device : getBondedDevices(mAdapter)) {
+                devicesList.add(device.getName());
+            }
+
+            arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_activated_1, devicesList);
+            listViewDevices.setAdapter(arrayAdapter);
+
+            listViewDevices.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    CAR_MEDIA = (String) listViewDevices.getItemAtPosition(position);
+
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString(deviceName, CAR_MEDIA);
+                    editor.apply();
+
+                    onBluetoothConnected();
+                }
+            });
+
             return;
         }
 
@@ -65,6 +105,7 @@ public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBr
 
     @Override
     protected void onDestroy() {
+        textLog.append("\nBTA2DPMainActivity->onDestroy");
         super.onDestroy();
         BluetoothAdapter.getDefaultAdapter().closeProfileProxy(BluetoothProfile.A2DP, btProxy);
     }
@@ -111,11 +152,20 @@ public class BTA2DPMainActivity extends AppCompatActivity implements BluetoothBr
                 connect.setAccessible(true);
                 textLog.append("\nBTA2DPMainActivity->invoke");
                 connect.invoke(proxy, device);
+                textLog.append("\n--------------------------------------------------");
+
+                for (BluetoothDevice connectedDevice : proxy.getConnectedDevices()) {
+                    if (connectedDevice != null) {
+                        textLog.append("\nConnected Device: " + connectedDevice.getName());
+                    }
+                }
 
             } catch (InvocationTargetException ex) {
                 textLog.append("\nUnable to invoke connect(BluetoothDevice) method on proxy. ");
             } catch (IllegalAccessException ex) {
                 textLog.append("\nIllegal Access! ");
+            } catch (Exception ex) {
+                textLog.append("\n" + ex.toString());
             }
         }
     }

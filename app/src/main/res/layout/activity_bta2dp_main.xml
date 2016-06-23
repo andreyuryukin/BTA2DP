@@ -23,7 +23,6 @@
         android:text="@string/textForLog"
         android:id="@+id/textViewLog"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
         android:layout_below="@id/listViewDevices"/>
 
 </RelativeLayout>
